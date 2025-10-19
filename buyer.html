@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wildberries — Покупатель</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+      color: #333;
+      min-height: 100vh;
+    }
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    #login-screen {
+      display: flex;
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      color: white;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+    }
+    .logo {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .logo span {
+      color: #ff6b6b;
+    }
+    input, button, select {
+      padding: 14px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 100%;
+      max-width: 400px;
+    }
+    input {
+      background: white;
+      color: #333;
+    }
+    button {
+      cursor: pointer;
+      background: #6c5ce7;
+      color: white;
+      border: none;
+      font-weight: bold;
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      background: #5d4de0;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid white;
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .btn-danger {
+      background: #e74c3c;
+    }
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+    .btn-success {
+      background: #2ecc71;
+    }
+    .btn-success:hover {
+      background: #27ae60;
+    }
+    .product-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    .product-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #2c3e50;
+    }
+    .product-price {
+      font-size: 20px;
+      font-weight: bold;
+      color: #6c5ce7;
+      margin: 8px 0;
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px;
+      background: white;
+      border-radius: 10px;
+      margin: 10px 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #eee;
+    }
+    .header h2 {
+      color: #6c5ce7;
+    }
+    .search-bar {
+      width: 100%;
+      max-width: 600px;
+      padding: 14px 20px;
+      font-size: 16px;
+      border-radius: 50px;
+      border: 2px solid #6c5ce7;
+      outline: none;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #6c5ce7;
+      color: white;
+      padding: 16px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      max-width: 350px;
+      z-index: 1000;
+      display: none;
+    }
+    .rating {
+      color: #f39c12;
+      font-size: 20px;
+      margin: 10px 0;
+    }
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Экран входа -->
+<div id="login-screen" class="screen">
+  <div class="logo">Wild<span>berries</span></div>
+  <h2>Вход в личный кабинет</h2>
+  <p>Введите номер телефона для входа</p>
+  <input type="tel" id="phone-input" placeholder="79991234567" maxlength="11" autofocus />
+  <button onclick="login()">Войти</button>
+  <button class="btn-outline" onclick="guestMode()">Войти как гость</button>
+</div>
+
+<!-- Главный экран -->
+<div id="main-screen" class="screen">
+  <div class="header">
+    <h2>🛍️ Каталог товаров</h2>
+    <div>
+      <button onclick="showCart()">Корзина (<span id="cart-count">0</span>)</button>
+      <button onclick="showOrders()">Мои заказы</button>
+      <button onclick="logout()">Выход</button>
+    </div>
+  </div>
+  <input type="text" class="search-bar" id="search-input" placeholder="Поиск по названию товара..." oninput="searchProducts()" />
+  <div class="grid" id="product-grid"></div>
+</div>
+
+<!-- Корзина -->
+<div id="cart-screen" class="screen">
+  <div class="header">
+    <h2>🛒 Корзина</h2>
+    <button onclick="backToMain()">← Назад</button>
+  </div>
+  <div id="cart-items"></div>
+  <div style="margin-top: 20px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+    <h3>Способ оплаты</h3>
+    <label style="display: block; margin: 10px 0;">
+      <input type="radio" name="payment-method" value="online" checked /> Онлайн оплата
+    </label>
+    <label style="display: block; margin: 10px 0;">
+      <input type="radio" name="payment-method" value="cash" /> Оплата при получении
+    </label>
+    <div style="margin-top: 15px;">
+      <strong>Итого: <span id="cart-total">0</span> ₽</strong>
+    </div>
+    <button class="btn-success" style="width: 100%; margin-top: 15px;" onclick="placeOrder()">Оформить заказ</button>
+  </div>
+</div>
+
+<!-- Заказы -->
+<div id="orders-screen" class="screen">
+  <div class="header">
+    <h2>📦 Мои заказы</h2>
+    <button onclick="backToMain()">← Назад</button>
+  </div>
+  <div id="orders-list"></div>
+</div>
+
+<!-- Уведомление -->
+<div id="notification" class="notification">
+  <strong>🔔 Уведомление</strong>
+  <p id="notification-text">Ваш заказ прибыл в ПВЗ!</p>
+</div>
+
+<script>
+  // === Инициализация Firebase ===
+  const firebaseConfig = {
+    databaseURL: "https://renessans-bank-3df94-default-rtdb.europe-west1.firebasedatabase.app/"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // === Глобальные переменные ===
+  let currentUser = null;
+  let cart = [];
+  let allProducts = [];
+
+  // === Генерация 1000+ товаров ===
+  function generateProducts() {
+    const categories = [
+      "Электроника", "Одежда", "Обувь", "Косметика", "Быт", "Продукты", 
+      "Игрушки", "Книги", "Спорт", "Авто", "Дом", "Сад", "Зоотовары"
+    ];
+    const adjectives = ["Премиум", "Эконом", "Профессиональный", "Детский", "Летний", "Зимний", "Универсальный"];
+    const nouns = ["набор", "устройство", "комплект", "средство", "аксессуар", "инструмент", "одежда"];
+
+    for (let i = 1; i <= 1000; i++) {
+      const category = categories[Math.floor(Math.random() * categories.length)];
+      const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const noun = nouns[Math.floor(Math.random() * nouns.length)];
+      const name = `${adj} ${category.toLowerCase()} ${noun}`;
+      const price = Math.floor(Math.random() * 8000) + 200; // от 200 до 8200 руб
+      allProducts.push({ id: i, name, price, category });
+    }
+  }
+
+  // === Вход ===
+  function login() {
+    const phone = document.getElementById("phone-input").value.replace(/\D/g, '');
+    if (phone.length !== 11 || !phone.startsWith('7')) {
+      alert("Пожалуйста, введите номер в формате 79991234567");
+      return;
+    }
+    currentUser = phone;
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("main-screen").style.display = "flex";
+    renderProducts(allProducts.slice(0, 50));
+  }
+
+  function guestMode() {
+    currentUser = "guest_" + Date.now();
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("main-screen").style.display = "flex";
+    renderProducts(allProducts.slice(0, 50));
+  }
+
+  function logout() {
+    currentUser = null;
+    cart = [];
+    document.getElementById("main-screen").style.display = "none";
+    document.getElementById("cart-screen").style.display = "none";
+    document.getElementById("orders-screen").style.display = "none";
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("phone-input").value = "";
+  }
+
+  // === Отображение товаров ===
+  function renderProducts(products) {
+    const grid = document.getElementById("product-grid");
+    grid.innerHTML = products.map(p => `
+      <div class="product-card">
+        <div class="product-name">${p.name}</div>
+        <div class="product-price">${p.price} ₽</div>
+        <button onclick="addToCart(${p.id})">В корзину</button>
+      </div>
+    `).join('');
+  }
+
+  function searchProducts() {
+    const query = document.getElementById("search-input").value.toLowerCase();
+    if (query.trim() === "") {
+      renderProducts(allProducts.slice(0, 50));
+      return;
+    }
+    const filtered = allProducts.filter(p => 
+      p.name.toLowerCase().includes(query) || 
+      p.category.toLowerCase().includes(query)
+    );
+    renderProducts(filtered.slice(0, 50));
+  }
+
+  // === Корзина ===
+  function addToCart(productId) {
+    cart.push(productId);
+    updateCartCount();
+    showNotification("Товар добавлен в корзину!");
+  }
+
+  function updateCartCount() {
+    document.getElementById("cart-count").textContent = cart.length;
+  }
+
+  function showCart() {
+    document.getElementById("main-screen").style.display = "none";
+    document.getElementById("cart-screen").style.display = "flex";
+    updateCartDisplay();
+  }
+
+  function updateCartDisplay() {
+    const container = document.getElementById("cart-items");
+    container.innerHTML = "";
+    if (cart.length === 0) {
+      container.innerHTML = "<p>Корзина пуста</p>";
+      document.getElementById("cart-total").textContent = "0";
+      return;
+    }
+
+    let total = 0;
+    const cartItems = cart.map(id => allProducts.find(p => p.id === id)).filter(Boolean);
+    cartItems.forEach((item, index) => {
+      total += item.price;
+      const div = document.createElement("div");
+      div.className = "cart-item";
+      div.innerHTML = `
+        <div>
+          <strong>${item.name}</strong><br>
+          ${item.price} ₽
+        </div>
+        <button class="btn-danger" onclick="removeFromCart(${index})">Удалить</button>
+      `;
+      container.appendChild(div);
+    });
+    document.getElementById("cart-total").textContent = total;
+  }
+
+  function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartDisplay();
+    updateCartCount();
+  }
+
+  function backToMain() {
+    document.getElementById("cart-screen").style.display = "none";
+    document.getElementById("orders-screen").style.display = "none";
+    document.getElementById("main-screen").style.display = "flex";
+  }
+
+  // === Оформление заказа ===
+  function placeOrder() {
+    if (cart.length === 0) {
+      alert("Корзина пуста!");
+      return;
+    }
+
+    const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
+    const items = cart.map(id => allProducts.find(p => p.id === id)).filter(Boolean);
+    const total = items.reduce((sum, item) => sum + item.price, 0);
+
+    const order = {
+      userId: currentUser,
+      items: items,
+      total: total,
+      paymentMethod: paymentMethod,
+      status: "created",
+      pvzAddress: "Г. Балашиха, проспект Ленина, 32Д",
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    db.ref('orders').push(order)
+      .then(() => {
+        cart = [];
+        updateCartCount();
+        showNotification("Заказ успешно оформлен! Ожидайте уведомления о готовности.");
+        backToMain();
+      })
+      .catch(err => {
+        alert("Ошибка при оформлении заказа: " + err.message);
+      });
+  }
+
+  // === Заказы ===
+  function showOrders() {
+    document.getElementById("main-screen").style.display = "none";
+    document.getElementById("orders-screen").style.display = "flex";
+    loadUserOrders();
+  }
+
+  function loadUserOrders() {
+    const list = document.getElementById("orders-list");
+    list.innerHTML = "<p>Загрузка заказов...</p>";
+
+    db.ref('orders')
+      .orderByChild('userId')
+      .equalTo(currentUser)
+      .once('value')
+      .then(snapshot => {
+        list.innerHTML = "";
+        if (!snapshot.exists()) {
+          list.innerHTML = "<p>У вас пока нет заказов.</p>";
+          return;
+        }
+
+        snapshot.forEach(child => {
+          const order = child.val();
+          const statusText = {
+            "created": "Ожидает обработки",
+            "received": "Готов к выдаче",
+            "issued": "Выдан",
+            "defect": "Брак"
+          }[order.status] || order.status;
+
+          const div = document.createElement("div");
+          div.className = "product-card";
+          div.innerHTML = `
+            <h3>Заказ №${child.key.slice(-6)}</h3>
+            <p><strong>Статус:</strong> ${statusText}</p>
+            <p><strong>Сумма:</strong> ${order.total} ₽</p>
+            <p><strong>Оплата:</strong> ${order.paymentMethod === 'cash' ? 'При получении' : 'Онлайн'}</p>
+            <p><strong>ПВЗ:</strong> ${order.pvzAddress}</p>
+            <p><strong>Товаров:</strong> ${order.items.length}</p>
+          `;
+          list.appendChild(div);
+        });
+      });
+  }
+
+  // === Уведомления ===
+  function showNotification(text) {
+    const notif = document.getElementById("notification");
+    document.getElementById("notification-text").textContent = text;
+    notif.style.display = "block";
+    setTimeout(() => {
+      notif.style.display = "none";
+    }, 5000);
+  }
+
+  // === Слушатель изменений заказов ===
+  function listenForOrderUpdates() {
+    if (!currentUser) return;
+
+    db.ref('orders')
+      .orderByChild('userId')
+      .equalTo(currentUser)
+      .on('child_changed', (snapshot) => {
+        const order = snapshot.val();
+        if (order.status === 'received') {
+          const msg = `Ваш заказ №${snapshot.key.slice(-6)} готов к выдаче в ПВЗ: Г. Балашиха, проспект Ленина, 32Д.`;
+          showNotification(msg);
+          if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(msg);
+            utterance.lang = 'ru-RU';
+            speechSynthesis.speak(utterance);
+          }
+        }
+      });
+  }
+
+  // === Инициализация ===
+  generateProducts();
+  document.getElementById("login-screen").style.display = "flex";
+
+  // Запуск слушателя после входа
+  const originalLogin = login;
+  login = function() {
+    originalLogin();
+    setTimeout(listenForOrderUpdates, 1000);
+  };
+</script>
+
+</body>
+</html>
