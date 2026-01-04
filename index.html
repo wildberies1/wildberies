@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Документы — Учебный портал (ПАО Уралсиббанк)</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 0;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      color: #003f7f;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .login-screen, .main-app, #addForm {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      max-width: 500px;
+      margin: 50px auto;
+    }
+
+    .main-app, #addForm {
+      display: none;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .form-group input[type="file"] {
+      padding: 6px;
+    }
+
+    .btn {
+      background: #0056b3;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background: #004494;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .controls button {
+      flex: 1;
+    }
+
+    .search-box {
+      margin-bottom: 20px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .documents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .document-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fafafa;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .document-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .doc-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      cursor: pointer;
+      background: #f0f0f0;
+    }
+
+    .doc-info {
+      padding: 12px;
+    }
+
+    .doc-name {
+      font-weight: 600;
+      color: #003f7f;
+      word-break: break-word;
+    }
+
+    .delete-btn {
+      margin-top: 8px;
+      background: #dc3545;
+      padding: 6px 10px;
+      font-size: 14px;
+      width: auto;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border: 2px solid white;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #777;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .login-screen, .main-app, #addForm {
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .documents-grid {
+        grid-template-columns: 1fr;
+      }
+      .controls {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ПАО «Уралсиббанк» — Архив документов</h1>
+      <p style="color: #666; margin-top: 8px;">Учебный портал. Все данные хранятся в облаке Firebase.</p>
+    </header>
+
+    <!-- Экран входа -->
+    <div class="login-screen" id="loginScreen">
+      <h2 style="text-align: center; margin-bottom: 20px; color: #003f7f;">Авторизация</h2>
+      <div class="form-group">
+        <label for="password">Пароль доступа:</label>
+        <input type="password" id="password" placeholder="Введите пароль (1265)" autocomplete="off" />
+      </div>
+      <button class="btn" onclick="attemptLogin()">Войти</button>
+      <p style="margin-top: 15px; color: #888; font-size: 14px;">
+        Это учебная система. Настоящий банк не запрашивает пароль на вход в архив.
+      </p>
+    </div>
+
+    <!-- Основное приложение -->
+    <div class="main-app" id="mainApp">
+      <div class="controls">
+        <button class="btn" onclick="showAddForm()">Добавить документ</button>
+        <button class="btn btn-secondary" onclick="logout()">Выйти</button>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Поиск по названию документа..." oninput="filterDocuments()" />
+      </div>
+
+      <div class="documents-grid" id="documentsContainer">
+        <!-- Документы будут загружены сюда -->
+      </div>
+    </div>
+
+    <!-- Форма добавления -->
+    <div id="addForm">
+      <h2 style="text-align: center; margin-bottom: 20px; color: #003f7f;">Новый документ</h2>
+      <div class="form-group">
+        <label for="docName">Название документа:</label>
+        <input type="text" id="docName" placeholder="Например: Приказ об увольнении" />
+      </div>
+      <div class="form-group">
+        <label for="docImage">Фото/скан документа:</label>
+        <input type="file" id="docImage" accept="image/*" />
+      </div>
+      <button class="btn" onclick="uploadDocument()">Сохранить</button>
+      <button class="btn btn-secondary" style="margin-top: 10px;" onclick="hideAddForm()">Отмена</button>
+    </div>
+  </div>
+
+  <!-- Модальное окно для просмотра изображения -->
+  <div class="modal" id="imageModal" onclick="closeModal()">
+    <img id="modalImage" src="" alt="Увеличенное изображение" />
+  </div>
+
+  <footer>
+    Учебный проект | Firebase Storage + Realtime DB | Не является продуктом ПАО «Уралсиббанк»
+  </footer>
+
+  <script>
+    // === 🔑 ВАЖНО: ЗАМЕНИТЕ НА СВОЙ КОНФИГ ИЗ FIREBASE CONSOLE ===
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "renessans-bank-3df94.firebaseapp.com",
+      databaseURL: "https://renessans-bank-3df94-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "renessans-bank-3df94",
+      storageBucket: "renessans-bank-3df94.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Инициализация Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const storage = firebase.storage();
+
+    let documents = [];
+
+    // === Аутентификация на клиенте ===
+    function attemptLogin() {
+      const pass = document.getElementById('password').value.trim();
+      if (pass === '1265') {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        loadDocuments();
+      } else {
+        alert('Неверный пароль! Попробуйте снова.');
+      }
+    }
+
+    function logout() {
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('password').value = '';
+      document.getElementById('loginScreen').style.display = 'block';
+    }
+
+    // === Работа с формой ===
+    function showAddForm() {
+      document.getElementById('addForm').style.display = 'block';
+    }
+
+    function hideAddForm() {
+      document.getElementById('addForm').style.display = 'none';
+      document.getElementById('docName').value = '';
+      document.getElementById('docImage').value = '';
+    }
+
+    // === Загрузка документа ===
+    async function uploadDocument() {
+      const name = document.getElementById('docName').value.trim();
+      const fileInput = document.getElementById('docImage');
+      if (!name) {
+        alert('Введите название документа.');
+        return;
+      }
+      if (!fileInput.files[0]) {
+        alert('Выберите изображение документа.');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64 = e.target.result;
+
+        const storageRef = storage.ref();
+        const imgRef = storageRef.child('document_portal/' + Date.now() + '_' + file.name);
+        try {
+          await imgRef.putString(base64, 'data_url');
+          const url = await imgRef.getDownloadURL();
+
+          const newDocRef = database.ref('document_portal').push();
+          await newDocRef.set({
+            id: newDocRef.key,
+            name: name,
+            imageUrl: url,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          });
+
+          alert('Документ успешно добавлен!');
+          hideAddForm();
+          loadDocuments();
+        } catch (err) {
+          console.error(err);
+          alert('Ошибка при загрузке: ' + (err.message || 'Неизвестная ошибка'));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // === Загрузка документов ===
+    async function loadDocuments() {
+      const container = document.getElementById('documentsContainer');
+      container.innerHTML = '<p>Загрузка документов...</p>';
+      try {
+        const snapshot = await database.ref('document_portal').once('value');
+        documents = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            documents.push(child.val());
+          });
+        }
+        renderDocuments(documents);
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<p style="color:red;">Ошибка загрузки. Проверьте подключение к Firebase.</p>';
+      }
+    }
+
+    // === Отображение ===
+    function renderDocuments(docs) {
+      const container = document.getElementById('documentsContainer');
+      if (docs.length === 0) {
+        container.innerHTML = '<p>Нет документов.</p>';
+        return;
+      }
+      container.innerHTML = docs.map(doc => `
+        <div class="document-card">
+          <img src="${escapeHtml(doc.imageUrl)}" class="doc-image" onclick="openImage('${escapeHtml(doc.imageUrl)}')" alt="${escapeHtml(doc.name)}" />
+          <div class="doc-info">
+            <div class="doc-name">${escapeHtml(doc.name)}</div>
+            <button class="btn delete-btn" onclick="deleteDocument('${escapeHtml(doc.id)}')">Удалить</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterDocuments() {
+      const term = document.getElementById('searchInput').value.toLowerCase().trim();
+      const filtered = documents.filter(doc => 
+        doc.name.toLowerCase().includes(term)
+      );
+      renderDocuments(filtered);
+    }
+
+    // === Удаление ===
+    function deleteDocument(id) {
+      if (!confirm('Удалить документ? Это действие нельзя отменить.')) return;
+      database.ref('document_portal/' + id).remove()
+        .then(() => {
+          alert('Документ удалён.');
+          loadDocuments();
+        })
+        .catch(err => {
+          alert('Ошибка удаления: ' + err.message);
+        });
+    }
+
+    // === Просмотр изображения ===
+    function openImage(src) {
+      document.getElementById('modalImage').src = src;
+      document.getElementById('imageModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('imageModal').style.display = 'none';
+    }
+
+    // === Безопасность ===
+    function escapeHtml(text) {
+      if (typeof text !== 'string') return '';
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Закрытие по Esc
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
+</body>
+</html>
