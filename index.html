@@ -1,448 +1,1326 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Документы — Учебный портал (ПАО Уралсиббанк)</title>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Милорды - Админ-панель</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark-bg: #0f172a;
+            --dark-surface: #1e293b;
+            --dark-border: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow: auto;
+            min-height: 100vh;
+        }
+        .screen { display: none; min-height: 100vh; }
+        .screen.active { display: flex; }
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+        /* Login Screen */
+        #adminLoginScreen {
+            justify-content: center;
+            align-items: center;
+            background: var(--gradient-1);
+            position: relative;
+            overflow: hidden;
+        }
+        #adminLoginScreen::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: bgMove 20s linear infinite;
+        }
+        @keyframes bgMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        .login-container {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logo { text-align: center; margin-bottom: 2rem; }
+        .logo i {
+            font-size: 4rem;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: crownFloat 3s ease-in-out infinite;
+        }
+        @keyframes crownFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .logo h1 {
+            font-size: 2rem;
+            margin-top: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo p { color: var(--text-muted); margin-top: 0.5rem; }
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .input-group i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        .input-group input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 1rem;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover { background: var(--dark-border); }
+        .btn-danger {
+            padding: 0.5rem 1rem;
+            background: var(--danger);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover { background: #dc2626; }
 
-    body {
-      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
-      min-height: 100vh;
-      padding: 20px;
-    }
+        /* Admin Main */
+        #adminMainScreen { flex-direction: row; }
+        .admin-sidebar {
+            width: 280px;
+            background: var(--dark-surface);
+            border-right: 1px solid var(--dark-border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+        .admin-logo {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--dark-border);
+        }
+        .admin-logo i {
+            font-size: 3rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .admin-logo h2 { margin-top: 1rem; font-size: 1.5rem; }
+        .admin-logo p { color: var(--text-muted); font-size: 0.9rem; }
+        .admin-nav {
+            flex: 1;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .admin-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .admin-nav-item:hover { background: var(--dark-bg); color: var(--text-primary); }
+        .admin-nav-item.active { background: var(--gradient-1); color: white; }
+        .admin-footer {
+            padding: 1rem;
+            border-top: 1px solid var(--dark-border);
+        }
+        .admin-main {
+            margin-left: 280px;
+            padding: 2rem;
+            min-height: 100vh;
+            flex: 1;
+        }
+        .admin-tab-content { display: none; }
+        .admin-tab-content.active { display: block; }
+        .admin-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .admin-header h1 { font-size: 2rem; }
+        .search-box { position: relative; }
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        .search-box input {
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            width: 300px;
+        }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+        /* Stats */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--dark-surface);
+            padding: 1.5rem;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        .stat-card i {
+            font-size: 3rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-info h3 { font-size: 2rem; margin-bottom: 0.25rem; }
+        .stat-info p { color: var(--text-muted); }
 
-    header {
-      text-align: center;
-      padding: 20px 0;
-      margin-bottom: 30px;
-    }
+        /* Table */
+        .users-table-container {
+            background: var(--dark-surface);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .users-table thead { background: var(--dark-bg); }
+        .users-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .users-table td {
+            padding: 1rem;
+            border-top: 1px solid var(--dark-border);
+        }
+        .users-table tr:hover { background: var(--dark-bg); }
+        .table-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .table-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-    header h1 {
-      color: #003f7f;
-      font-size: 28px;
-      font-weight: 700;
-    }
+        /* Form */
+        .form-container {
+            background: var(--dark-surface);
+            padding: 2rem;
+            border-radius: 15px;
+        }
+        .form-section { margin-bottom: 2rem; }
+        .form-section h3 { margin-bottom: 1rem; color: var(--text-secondary); }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .form-group label {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 0.75rem;
+            background: var(--dark-bg);
+            border: 1px solid var(--dark-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .password-field { display: flex; gap: 0.5rem; }
+        .password-field input { flex: 1; }
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-icon:hover { background: var(--primary-dark); }
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
 
-    .login-screen, .main-app, #addForm {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-      padding: 30px;
-      max-width: 500px;
-      margin: 50px auto;
-    }
+        /* Credentials Card */
+        .credentials-card {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--success);
+            border-radius: 15px;
+            color: white;
+        }
+        .credentials-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .credentials-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
 
-    .main-app, #addForm {
-      display: none;
-    }
+        /* Avatar Grid */
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--dark-bg);
+            border-radius: 10px;
+        }
+        .avatar-option {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+        .avatar-option:hover { transform: scale(1.1); border-color: var(--primary); }
+        .avatar-option.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+        .avatar-option img { width: 100%; height: 100%; object-fit: cover; }
 
-    .form-group {
-      margin-bottom: 20px;
-    }
+        /* Animation Options */
+        .animation-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--dark-bg);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .radio-option:hover { background: var(--dark-border); }
+        .radio-option input[type="radio"] { width: 20px; height: 20px; cursor: pointer; }
 
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #333;
-    }
+        /* Toggle */
+        .toggle-option {
+            padding: 1rem;
+            background: var(--dark-bg);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        .toggle-option label {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+        }
+        .toggle-option input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
 
-    .form-group input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-    }
+        /* Messages Admin */
+        .messages-admin-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .message-admin-item {
+            background: var(--dark-surface);
+            padding: 1.5rem;
+            border-radius: 15px;
+            display: flex;
+            gap: 1rem;
+        }
+        .message-admin-content { flex: 1; }
+        .message-admin-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .message-admin-type {
+            padding: 0.25rem 0.75rem;
+            background: var(--primary);
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .message-admin-actions { display: flex; gap: 0.5rem; }
+        .message-admin-text {
+            padding: 0.75rem;
+            background: var(--dark-bg);
+            border-radius: 10px;
+            margin-top: 0.5rem;
+        }
+        .message-admin-text audio,
+        .message-admin-text video {
+            max-width: 100%;
+            margin-top: 0.5rem;
+        }
 
-    .form-group input[type="file"] {
-      padding: 6px;
-    }
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--dark-surface);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-header h2 { font-size: 1.5rem; }
+        .close-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--dark-bg);
+            border: none;
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        .close-btn:hover { background: var(--danger); }
+        .modal-body { padding: 1.5rem; }
 
-    .btn {
-      background: #0056b3;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      width: 100%;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
+        /* Notifications */
+        .notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .notification {
+            padding: 1rem 1.5rem;
+            background: var(--dark-surface);
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: notificationSlide 0.3s ease-out;
+            min-width: 300px;
+        }
+        @keyframes notificationSlide {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .notification.success { border-left: 4px solid var(--success); }
+        .notification.error { border-left: 4px solid var(--danger); }
+        .notification.info { border-left: 4px solid var(--primary); }
+        .notification i { font-size: 1.5rem; }
+        .notification.success i { color: var(--success); }
+        .notification.error i { color: var(--danger); }
+        .notification.info i { color: var(--primary); }
 
-    .btn:hover {
-      background: #004494;
-    }
-
-    .btn-secondary {
-      background: #6c757d;
-    }
-
-    .btn-secondary:hover {
-      background: #5a6268;
-    }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 25px;
-    }
-
-    .controls button {
-      flex: 1;
-    }
-
-    .search-box {
-      margin-bottom: 20px;
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-
-    .documents-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 20px;
-    }
-
-    .document-card {
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fafafa;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .document-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    .doc-image {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      cursor: pointer;
-      background: #f0f0f0;
-    }
-
-    .doc-info {
-      padding: 12px;
-    }
-
-    .doc-name {
-      font-weight: 600;
-      color: #003f7f;
-      word-break: break-word;
-    }
-
-    .delete-btn {
-      margin-top: 8px;
-      background: #dc3545;
-      padding: 6px 10px;
-      font-size: 14px;
-      width: auto;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal img {
-      max-width: 90%;
-      max-height: 90%;
-      border: 2px solid white;
-    }
-
-    footer {
-      text-align: center;
-      margin-top: 40px;
-      color: #777;
-      font-size: 14px;
-    }
-
-    @media (max-width: 600px) {
-      .login-screen, .main-app, #addForm {
-        margin: 20px auto;
-        padding: 20px;
-      }
-      .documents-grid {
-        grid-template-columns: 1fr;
-      }
-      .controls {
-        flex-direction: column;
-      }
-    }
-  </style>
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar { width: 100%; height: auto; position: relative; }
+            .admin-main { margin-left: 0; }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>ПАО «Уралсиббанк» — Архив документов</h1>
-      <p style="color: #666; margin-top: 8px;">Учебный портал. Все данные хранятся в облаке Firebase.</p>
-    </header>
-
-    <!-- Экран входа -->
-    <div class="login-screen" id="loginScreen">
-      <h2 style="text-align: center; margin-bottom: 20px; color: #003f7f;">Авторизация</h2>
-      <div class="form-group">
-        <label for="password">Пароль доступа:</label>
-        <input type="password" id="password" placeholder="Введите пароль (1265)" autocomplete="off" />
-      </div>
-      <button class="btn" onclick="attemptLogin()">Войти</button>
-      <p style="margin-top: 15px; color: #888; font-size: 14px;">
-        Это учебная система. Настоящий банк не запрашивает пароль на вход в архив.
-      </p>
-    </div>
-
-    <!-- Основное приложение -->
-    <div class="main-app" id="mainApp">
-      <div class="controls">
-        <button class="btn" onclick="showAddForm()">Добавить документ</button>
-        <button class="btn btn-secondary" onclick="logout()">Выйти</button>
-      </div>
-
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Поиск по названию документа..." oninput="filterDocuments()" />
-      </div>
-
-      <div class="documents-grid" id="documentsContainer">
-        <!-- Документы будут загружены сюда -->
-      </div>
-    </div>
-
-    <!-- Форма добавления -->
-    <div id="addForm">
-      <h2 style="text-align: center; margin-bottom: 20px; color: #003f7f;">Новый документ</h2>
-      <div class="form-group">
-        <label for="docName">Название документа:</label>
-        <input type="text" id="docName" placeholder="Например: Приказ об увольнении" />
-      </div>
-      <div class="form-group">
-        <label for="docImage">Фото/скан документа:</label>
-        <input type="file" id="docImage" accept="image/*" />
-      </div>
-      <button class="btn" onclick="uploadDocument()">Сохранить</button>
-      <button class="btn btn-secondary" style="margin-top: 10px;" onclick="hideAddForm()">Отмена</button>
-    </div>
-  </div>
-
-  <!-- Модальное окно для просмотра изображения -->
-  <div class="modal" id="imageModal" onclick="closeModal()">
-    <img id="modalImage" src="" alt="Увеличенное изображение" />
-  </div>
-
-  <footer>
-    Учебный проект | Firebase Storage + Realtime DB | Не является продуктом ПАО «Уралсиббанк»
-  </footer>
-
-  <script>
-    // === 🔑 ВАЖНО: ЗАМЕНИТЕ НА СВОЙ КОНФИГ ИЗ FIREBASE CONSOLE ===
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "renessans-bank-3df94.firebaseapp.com",
-      databaseURL: "https://renessans-bank-3df94-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "renessans-bank-3df94",
-      storageBucket: "renessans-bank-3df94.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    // Инициализация Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    const storage = firebase.storage();
-
-    let documents = [];
-
-    // === Аутентификация на клиенте ===
-    function attemptLogin() {
-      const pass = document.getElementById('password').value.trim();
-      if (pass === '1265') {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-        loadDocuments();
-      } else {
-        alert('Неверный пароль! Попробуйте снова.');
-      }
-    }
-
-    function logout() {
-      document.getElementById('mainApp').style.display = 'none';
-      document.getElementById('password').value = '';
-      document.getElementById('loginScreen').style.display = 'block';
-    }
-
-    // === Работа с формой ===
-    function showAddForm() {
-      document.getElementById('addForm').style.display = 'block';
-    }
-
-    function hideAddForm() {
-      document.getElementById('addForm').style.display = 'none';
-      document.getElementById('docName').value = '';
-      document.getElementById('docImage').value = '';
-    }
-
-    // === Загрузка документа ===
-    async function uploadDocument() {
-      const name = document.getElementById('docName').value.trim();
-      const fileInput = document.getElementById('docImage');
-      if (!name) {
-        alert('Введите название документа.');
-        return;
-      }
-      if (!fileInput.files[0]) {
-        alert('Выберите изображение документа.');
-        return;
-      }
-
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        const base64 = e.target.result;
-
-        const storageRef = storage.ref();
-        const imgRef = storageRef.child('document_portal/' + Date.now() + '_' + file.name);
-        try {
-          await imgRef.putString(base64, 'data_url');
-          const url = await imgRef.getDownloadURL();
-
-          const newDocRef = database.ref('document_portal').push();
-          await newDocRef.set({
-            id: newDocRef.key,
-            name: name,
-            imageUrl: url,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-          });
-
-          alert('Документ успешно добавлен!');
-          hideAddForm();
-          loadDocuments();
-        } catch (err) {
-          console.error(err);
-          alert('Ошибка при загрузке: ' + (err.message || 'Неизвестная ошибка'));
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // === Загрузка документов ===
-    async function loadDocuments() {
-      const container = document.getElementById('documentsContainer');
-      container.innerHTML = '<p>Загрузка документов...</p>';
-      try {
-        const snapshot = await database.ref('document_portal').once('value');
-        documents = [];
-        if (snapshot.exists()) {
-          snapshot.forEach(child => {
-            documents.push(child.val());
-          });
-        }
-        renderDocuments(documents);
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = '<p style="color:red;">Ошибка загрузки. Проверьте подключение к Firebase.</p>';
-      }
-    }
-
-    // === Отображение ===
-    function renderDocuments(docs) {
-      const container = document.getElementById('documentsContainer');
-      if (docs.length === 0) {
-        container.innerHTML = '<p>Нет документов.</p>';
-        return;
-      }
-      container.innerHTML = docs.map(doc => `
-        <div class="document-card">
-          <img src="${escapeHtml(doc.imageUrl)}" class="doc-image" onclick="openImage('${escapeHtml(doc.imageUrl)}')" alt="${escapeHtml(doc.name)}" />
-          <div class="doc-info">
-            <div class="doc-name">${escapeHtml(doc.name)}</div>
-            <button class="btn delete-btn" onclick="deleteDocument('${escapeHtml(doc.id)}')">Удалить</button>
-          </div>
+    <!-- Admin Login Screen -->
+    <div id="adminLoginScreen" class="screen active">
+        <div class="login-container">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>Админ-панель</h1>
+                <p>Милорды</p>
+            </div>
+            <form id="adminLoginForm">
+                <div class="input-group">
+                    <i class="fas fa-user-shield"></i>
+                    <input type="text" id="adminUsername" placeholder="Логин администратора" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="adminPassword" placeholder="Пароль" required>
+                </div>
+                <button type="submit" class="btn-primary">Войти</button>
+            </form>
         </div>
-      `).join('');
-    }
+    </div>
 
-    function filterDocuments() {
-      const term = document.getElementById('searchInput').value.toLowerCase().trim();
-      const filtered = documents.filter(doc => 
-        doc.name.toLowerCase().includes(term)
-      );
-      renderDocuments(filtered);
-    }
+    <!-- Admin Main Screen -->
+    <div id="adminMainScreen" class="screen">
+        <aside class="admin-sidebar">
+            <div class="admin-logo">
+                <i class="fas fa-shield-alt"></i>
+                <h2>Милорды</h2>
+                <p>Админ-панель</p>
+            </div>
 
-    // === Удаление ===
-    function deleteDocument(id) {
-      if (!confirm('Удалить документ? Это действие нельзя отменить.')) return;
-      database.ref('document_portal/' + id).remove()
-        .then(() => {
-          alert('Документ удалён.');
-          loadDocuments();
-        })
-        .catch(err => {
-          alert('Ошибка удаления: ' + err.message);
+            <nav class="admin-nav">
+                <a href="#" class="admin-nav-item active" data-tab="users">
+                    <i class="fas fa-users"></i>
+                    <span>Пользователи</span>
+                </a>
+                <a href="#" class="admin-nav-item" data-tab="addUser">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Добавить пользователя</span>
+                </a>
+                <a href="#" class="admin-nav-item" data-tab="messages">
+                    <i class="fas fa-comments"></i>
+                    <span>Сообщения</span>
+                </a>
+                <a href="#" class="admin-nav-item" data-tab="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки группы</span>
+                </a>
+            </nav>
+
+            <div class="admin-footer">
+                <button id="adminLogout" class="btn-secondary" style="width: 100%;">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </button>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            <!-- Users Tab -->
+            <div id="usersTab" class="admin-tab-content active">
+                <header class="admin-header">
+                    <h1>Управление пользователями</h1>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="userSearch" placeholder="Поиск пользователей...">
+                    </div>
+                </header>
+
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="stat-info">
+                            <h3 id="totalUsers">0</h3>
+                            <p>Всего пользователей</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-user-check"></i>
+                        <div class="stat-info">
+                            <h3 id="onlineUsers">0</h3>
+                            <p>Сейчас онлайн</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-comment-dots"></i>
+                        <div class="stat-info">
+                            <h3 id="totalMessages">0</h3>
+                            <p>Всего сообщений</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="users-table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Аватар</th>
+                                <th>Имя</th>
+                                <th>Логин</th>
+                                <th>Пароль</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add User Tab -->
+            <div id="addUserTab" class="admin-tab-content">
+                <header class="admin-header">
+                    <h1>Добавить нового пользователя</h1>
+                </header>
+
+                <div class="form-container">
+                    <form id="addUserForm">
+                        <div class="form-section">
+                            <h3>Основная информация</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Имя пользователя</label>
+                                    <input type="text" id="newUserName" placeholder="Иван Иванов" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Логин</label>
+                                    <input type="text" id="newUserLogin" placeholder="ivan_ivanov" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Пароль</label>
+                                    <div class="password-field">
+                                        <input type="text" id="newUserPassword" placeholder="Пароль" required>
+                                        <button type="button" id="generatePassword" class="btn-icon" title="Сгенерировать">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Статус</label>
+                                    <input type="text" id="newUserStatus" placeholder="В сети">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Аватар</h3>
+                            <div class="avatar-grid" id="adminAvatarGrid"></div>
+                            <input type="hidden" id="selectedAvatar" value="">
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Анимация аватара</h3>
+                            <div class="animation-options">
+                                <label class="radio-option">
+                                    <input type="radio" name="userAnimation" value="pulse" checked>
+                                    <span>Пульсация</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="userAnimation" value="rotate">
+                                    <span>Вращение</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="userAnimation" value="bounce">
+                                    <span>Прыжки</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="userAnimation" value="glow">
+                                    <span>Свечение</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="userAnimation" value="rainbow">
+                                    <span>Радуга</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="userAnimation" value="none">
+                                    <span>Без анимации</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary" style="width: auto;">
+                                <i class="fas fa-user-plus"></i> Создать пользователя
+                            </button>
+                            <button type="reset" class="btn-secondary">Очистить</button>
+                        </div>
+                    </form>
+
+                    <div id="createdUserCredentials" class="credentials-card" style="display: none;">
+                        <h3><i class="fas fa-check-circle"></i> Пользователь создан!</h3>
+                        <div class="credentials-info">
+                            <p><strong>Имя:</strong> <span id="credName"></span></p>
+                            <p><strong>Логин:</strong> <span id="credLogin"></span></p>
+                            <p><strong>Пароль:</strong> <span id="credPassword"></span></p>
+                        </div>
+                        <button id="copyCredentials" class="btn-secondary" style="background: white; color: var(--success);">
+                            <i class="fas fa-copy"></i> Копировать данные
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Tab -->
+            <div id="messagesTab" class="admin-tab-content">
+                <header class="admin-header">
+                    <h1>Сообщения группы</h1>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="messageSearch" placeholder="Поиск сообщений...">
+                    </div>
+                </header>
+
+                <div class="messages-admin-list" id="adminMessagesList"></div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settingsTab" class="admin-tab-content">
+                <header class="admin-header">
+                    <h1>Настройки группы</h1>
+                </header>
+
+                <div class="form-container">
+                    <form id="groupSettingsForm">
+                        <div class="form-section">
+                            <h3>Основная информация</h3>
+                            <div class="form-group">
+                                <label>Название группы</label>
+                                <input type="text" id="groupName" value="Милорды" required>
+                            </div>
+                            <div class="form-group" style="margin-top: 1rem;">
+                                <label>Описание группы</label>
+                                <textarea id="groupDescription" rows="3" placeholder="Описание группы..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Настройки доступа</h3>
+                            <div class="toggle-option">
+                                <label>
+                                    <input type="checkbox" id="allowVoiceMessages" checked>
+                                    <span>Разрешить голосовые сообщения</span>
+                                </label>
+                            </div>
+                            <div class="toggle-option">
+                                <label>
+                                    <input type="checkbox" id="allowCircleMessages" checked>
+                                    <span>Разрешить кружочки</span>
+                                </label>
+                            </div>
+                            <div class="toggle-option">
+                                <label>
+                                    <input type="checkbox" id="allowEmoji" checked>
+                                    <span>Разрешить эмодзи</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Модерация</h3>
+                            <div class="toggle-option">
+                                <label>
+                                    <input type="checkbox" id="moderateMessages">
+                                    <span>Модерация сообщений перед публикацией</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary" style="width: auto;">
+                                <i class="fas fa-save"></i> Сохранить настройки
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Редактировать пользователя</h2>
+                <button class="close-btn" id="closeEditUser">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="form-group">
+                        <label>Имя</label>
+                        <input type="text" id="editUserName" required>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Логин</label>
+                        <input type="text" id="editUserLogin" required>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Новый пароль (оставьте пустым, чтобы не менять)</label>
+                        <input type="text" id="editUserPassword">
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Статус</label>
+                        <input type="text" id="editUserStatus">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" style="width: auto;">Сохранить</button>
+                        <button type="button" class="btn-secondary" id="cancelEdit">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminNotifications" class="notifications-container"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+            authDomain: "dtv-bank.firebaseapp.com",
+            databaseURL: "https://dtv-bank-default-rtdb.firebaseio.com",
+            projectId: "dtv-bank",
+            storageBucket: "dtv-bank.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Admin credentials (change these!)
+        const ADMIN_CREDENTIALS = {
+            login: 'admin',
+            password: 'admin123'
+        };
+
+        const availableAvatars = [
+            'https://api.dicebear.com/7.6/adventurer/svg?seed=Felix',
+            'https://api.dicebear.com/7.6/adventurer/svg?seed=Aneka',
+            'https://api.dicebear.com/7.6/adventurer/svg?seed=Leo',
+            'https://api.dicebear.com/7.6/adventurer/svg?seed=Mia',
+            'https://api.dicebear.com/7.6/adventurer/svg?seed=Max',
+            'https://api.dicebear.com/7.6/adventurer/svg?seed=Luna',
+            'https://api.dicebear.com/7.6/adventurer/svg?seed=Oscar',
+            'https://api.dicebear.com/7.6/adventurer/svg?seed=Lily',
+            'https://api.dicebear.com/7.6/bottts/svg?seed=Robot1',
+            'https://api.dicebear.com/7.6/bottts/svg?seed=Robot2',
+            'https://api.dicebear.com/7.6/pixel-art/svg?seed=Pixel1',
+            'https://api.dicebear.com/7.6/pixel-art/svg?seed=Pixel2',
+            'https://api.dicebear.com/7.6/avataaars/svg?seed=Av1',
+            'https://api.dicebear.com/7.6/avataaars/svg?seed=Av2',
+            'https://api.dicebear.com/7.6/lorelei/svg?seed=Lor1',
+            'https://api.dicebear.com/7.6/lorelei/svg?seed=Lor2'
+        ];
+
+        let isAdminLoggedIn = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAuth();
+            initEventListeners();
+            initAvatarGrid();
         });
-    }
 
-    // === Просмотр изображения ===
-    function openImage(src) {
-      document.getElementById('modalImage').src = src;
-      document.getElementById('imageModal').style.display = 'flex';
-    }
+        function checkAdminAuth() {
+            const savedAdmin = localStorage.getItem('adminLoggedIn');
+            if (savedAdmin === 'true') {
+                isAdminLoggedIn = true;
+                showAdminMain();
+                loadUsers();
+                loadMessages();
+                loadGroupSettings();
+                setupRealtimeListeners();
+            }
+        }
 
-    function closeModal() {
-      document.getElementById('imageModal').style.display = 'none';
-    }
+        function initEventListeners() {
+            document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
+            document.getElementById('adminLogout').addEventListener('click', handleAdminLogout);
+            document.getElementById('addUserForm').addEventListener('submit', handleAddUser);
+            document.getElementById('generatePassword').addEventListener('click', generatePassword);
+            document.getElementById('copyCredentials').addEventListener('click', copyCredentials);
+            document.getElementById('editUserForm').addEventListener('submit', handleEditUser);
+            document.getElementById('closeEditUser').addEventListener('click', closeEditModal);
+            document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
+            document.getElementById('groupSettingsForm').addEventListener('submit', handleSaveGroupSettings);
+            document.getElementById('userSearch').addEventListener('input', filterUsers);
+            document.getElementById('messageSearch').addEventListener('input', filterMessages);
 
-    // === Безопасность ===
-    function escapeHtml(text) {
-      if (typeof text !== 'string') return '';
-      return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
+            document.querySelectorAll('.admin-nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tab = this.getAttribute('data-tab');
+                    switchAdminTab(tab);
+                });
+            });
+        }
 
-    // Закрытие по Esc
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModal();
-    });
-  </script>
+        function initAvatarGrid() {
+            const grid = document.getElementById('adminAvatarGrid');
+            grid.innerHTML = '';
+            availableAvatars.forEach((avatar, index) => {
+                const option = document.createElement('div');
+                option.className = 'avatar-option';
+                if (index === 0) {
+                    option.classList.add('selected');
+                    document.getElementById('selectedAvatar').value = avatar;
+                }
+                option.innerHTML = `<img src="${avatar}" alt="Avatar ${index}">`;
+                option.onclick = () => {
+                    document.querySelectorAll('#adminAvatarGrid .avatar-option').forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    document.getElementById('selectedAvatar').value = avatar;
+                };
+                grid.appendChild(option);
+            });
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value;
+
+            if (username === ADMIN_CREDENTIALS.login && password === ADMIN_CREDENTIALS.password) {
+                isAdminLoggedIn = true;
+                localStorage.setItem('adminLoggedIn', 'true');
+                showAdminMain();
+                loadUsers();
+                loadMessages();
+                loadGroupSettings();
+                setupRealtimeListeners();
+                showNotification('Добро пожаловать, администратор!', 'success');
+            } else {
+                showNotification('Неверный логин или пароль', 'error');
+            }
+        }
+
+        function handleAdminLogout() {
+            isAdminLoggedIn = false;
+            localStorage.removeItem('adminLoggedIn');
+            document.getElementById('adminMainScreen').classList.remove('active');
+            document.getElementById('adminLoginScreen').classList.add('active');
+            document.getElementById('adminLoginForm').reset();
+        }
+
+        function showAdminMain() {
+            document.getElementById('adminLoginScreen').classList.remove('active');
+            document.getElementById('adminMainScreen').classList.add('active');
+        }
+
+        function switchAdminTab(tab) {
+            document.querySelectorAll('.admin-nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`.admin-nav-item[data-tab="${tab}"]`).classList.add('active');
+            document.querySelectorAll('.admin-tab-content').forEach(tc => tc.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+
+        function loadUsers() {
+            database.ref('users').on('value', snapshot => {
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+                let totalUsers = 0;
+                let onlineUsers = 0;
+
+                snapshot.forEach(child => {
+                    const user = child.val();
+                    const userId = child.key;
+                    totalUsers++;
+                    if (user.online) onlineUsers++;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="table-avatar">
+                                <img src="${user.avatar || availableAvatars[0]}" alt="${user.name}">
+                            </div>
+                        </td>
+                        <td>${user.name || user.login}</td>
+                        <td><code>${user.login}</code></td>
+                        <td><code>${user.password}</code></td>
+                        <td>${user.status || (user.online ? 'В сети' : 'Не в сети')}</td>
+                        <td>
+                            <button class="btn-icon" onclick="editUser('${userId}')" title="Редактировать">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-danger" onclick="deleteUser('${userId}')" title="Удалить">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('totalUsers').textContent = totalUsers;
+                document.getElementById('onlineUsers').textContent = onlineUsers;
+            });
+        }
+
+        function filterUsers() {
+            const query = document.getElementById('userSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTableBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function generatePassword() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+            let password = '';
+            for (let i = 0; i < 12; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('newUserPassword').value = password;
+        }
+
+        async function handleAddUser(e) {
+            e.preventDefault();
+            const name = document.getElementById('newUserName').value.trim();
+            const login = document.getElementById('newUserLogin').value.trim();
+            const password = document.getElementById('newUserPassword').value;
+            const status = document.getElementById('newUserStatus').value.trim();
+            const avatar = document.getElementById('selectedAvatar').value || availableAvatars[0];
+            const animation = document.querySelector('input[name="userAnimation"]:checked').value;
+
+            // Check if login exists
+            const existingSnapshot = await database.ref('users').orderByChild('login').equalTo(login).once('value');
+            if (existingSnapshot.exists()) {
+                showNotification('Пользователь с таким логином уже существует', 'error');
+                return;
+            }
+
+            try {
+                const newUserRef = database.ref('users').push();
+                await newUserRef.set({
+                    name: name,
+                    login: login,
+                    password: password,
+                    status: status || 'Новый участник',
+                    avatar: avatar,
+                    animation: animation,
+                    online: false,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                document.getElementById('credName').textContent = name;
+                document.getElementById('credLogin').textContent = login;
+                document.getElementById('credPassword').textContent = password;
+                document.getElementById('createdUserCredentials').style.display = 'block';
+
+                showNotification('Пользователь успешно создан', 'success');
+                document.getElementById('addUserForm').reset();
+                initAvatarGrid();
+
+                // Add system message
+                database.ref('messages').push({
+                    type: 'system',
+                    text: name + ' присоединился к группе',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            } catch (error) {
+                showNotification('Ошибка создания: ' + error.message, 'error');
+            }
+        }
+
+        function copyCredentials() {
+            const name = document.getElementById('credName').textContent;
+            const login = document.getElementById('credLogin').textContent;
+            const password = document.getElementById('credPassword').textContent;
+            const text = `Имя: ${name}\nЛогин: ${login}\nПароль: ${password}`;
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Данные скопированы в буфер обмена', 'success');
+            });
+        }
+
+        window.editUser = function(userId) {
+            database.ref('users/' + userId).once('value').then(snapshot => {
+                const user = snapshot.val();
+                document.getElementById('editUserId').value = userId;
+                document.getElementById('editUserName').value = user.name || '';
+                document.getElementById('editUserLogin').value = user.login || '';
+                document.getElementById('editUserPassword').value = '';
+                document.getElementById('editUserStatus').value = user.status || '';
+                document.getElementById('editUserModal').classList.add('active');
+            });
+        };
+
+        async function handleEditUser(e) {
+            e.preventDefault();
+            const userId = document.getElementById('editUserId').value;
+            const name = document.getElementById('editUserName').value.trim();
+            const login = document.getElementById('editUserLogin').value.trim();
+            const password = document.getElementById('editUserPassword').value;
+            const status = document.getElementById('editUserStatus').value.trim();
+
+            const updates = { name, login, status };
+            if (password) updates.password = password;
+
+            try {
+                await database.ref('users/' + userId).update(updates);
+                closeEditModal();
+                showNotification('Пользователь обновлён', 'success');
+            } catch (error) {
+                showNotification('Ошибка обновления: ' + error.message, 'error');
+            }
+        }
+
+        window.deleteUser = function(userId) {
+            if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+                database.ref('users/' + userId).remove().then(() => {
+                    showNotification('Пользователь удалён', 'success');
+                }).catch(error => {
+                    showNotification('Ошибка удаления: ' + error.message, 'error');
+                });
+            }
+        };
+
+        function closeEditModal() {
+            document.getElementById('editUserModal').classList.remove('active');
+        }
+
+        function loadMessages() {
+            database.ref('messages').orderByChild('timestamp').limitToLast(200).on('value', snapshot => {
+                const list = document.getElementById('adminMessagesList');
+                list.innerHTML = '';
+                const messages = [];
+                snapshot.forEach(child => {
+                    messages.unshift({ id: child.key, ...child.val() });
+                });
+
+                messages.forEach(msg => {
+                    const item = document.createElement('div');
+                    item.className = 'message-admin-item';
+                    const time = new Date(msg.timestamp).toLocaleString('ru-RU');
+
+                    let content = '';
+                    if (msg.type === 'text') {
+                        content = `<div class="message-admin-text">${escapeHtml(msg.text)}</div>`;
+                    } else if (msg.type === 'voice') {
+                        content = `<div class="message-admin-text"><i class="fas fa-microphone"></i> Голосовое сообщение<audio controls src="${msg.audioUrl}" style="display: block; margin-top: 0.5rem;"></audio></div>`;
+                    } else if (msg.type === 'circle') {
+                        content = `<div class="message-admin-text"><i class="fas fa-video"></i> Кружочек<video controls src="${msg.videoUrl}" style="display: block; margin-top: 0.5rem; max-width: 200px; border-radius: 50%;"></video></div>`;
+                    } else if (msg.type === 'system') {
+                        content = `<div class="message-admin-text" style="background: var(--primary); color: white;"><i class="fas fa-info-circle"></i> ${msg.text}</div>`;
+                    }
+
+                    const typeLabel = { text: 'Текст', voice: 'Голос', circle: 'Кружочек', system: 'Система' }[msg.type] || msg.type;
+
+                    item.innerHTML = `
+                        <div class="message-admin-content">
+                            <div class="message-admin-header">
+                                <strong>${msg.senderName || 'Система'}</strong>
+                                <span class="message-admin-type">${typeLabel}</span>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">${time}</span>
+                            </div>
+                            ${content}
+                        </div>
+                        <div class="message-admin-actions">
+                            <button class="btn-danger" onclick="deleteMessage('${msg.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+
+                document.getElementById('totalMessages').textContent = messages.length;
+            });
+        }
+
+        function filterMessages() {
+            const query = document.getElementById('messageSearch').value.toLowerCase();
+            const items = document.querySelectorAll('#adminMessagesList .message-admin-item');
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        window.deleteMessage = function(messageId) {
+            if (confirm('Удалить это сообщение?')) {
+                database.ref('messages/' + messageId).remove().then(() => {
+                    showNotification('Сообщение удалено', 'success');
+                });
+            }
+        };
+
+        function loadGroupSettings() {
+            database.ref('groupSettings').once('value').then(snapshot => {
+                const settings = snapshot.val() || {};
+                document.getElementById('groupName').value = settings.name || 'Милорды';
+                document.getElementById('groupDescription').value = settings.description || '';
+                document.getElementById('allowVoiceMessages').checked = settings.allowVoice !== false;
+                document.getElementById('allowCircleMessages').checked = settings.allowCircle !== false;
+                document.getElementById('allowEmoji').checked = settings.allowEmoji !== false;
+                document.getElementById('moderateMessages').checked = settings.moderateMessages || false;
+            });
+        }
+
+        async function handleSaveGroupSettings(e) {
+            e.preventDefault();
+            const settings = {
+                name: document.getElementById('groupName').value,
+                description: document.getElementById('groupDescription').value,
+                allowVoice: document.getElementById('allowVoiceMessages').checked,
+                allowCircle: document.getElementById('allowCircleMessages').checked,
+                allowEmoji: document.getElementById('allowEmoji').checked,
+                moderateMessages: document.getElementById('moderateMessages').checked
+            };
+            try {
+                await database.ref('groupSettings').set(settings);
+                showNotification('Настройки сохранены', 'success');
+            } catch (error) {
+                showNotification('Ошибка сохранения: ' + error.message, 'error');
+            }
+        }
+
+        function setupRealtimeListeners() {
+            database.ref('users').on('value', snapshot => {
+                let totalUsers = 0;
+                let onlineUsers = 0;
+                snapshot.forEach(child => {
+                    totalUsers++;
+                    if (child.val().online) onlineUsers++;
+                });
+                document.getElementById('totalUsers').textContent = totalUsers;
+                document.getElementById('onlineUsers').textContent = onlineUsers;
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('adminNotifications');
+            const notification = document.createElement('div');
+            notification.className = 'notification ' + type;
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+            notification.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span>`;
+            container.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'notificationSlide 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
 </body>
 </html>
